@@ -5,24 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Kamar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class KamarController extends Controller
 {
-    // READ ALL: Mengambil daftar semua kamar
+    /**
+     * GET /api/kamars
+     * Mengambil semua data kamar dengan relasi penghuni
+     */
     public function index()
     {
-        $kamars = Kamar::with('penghuni')->orderBy('id', 'desc')->get();
+        $kamars = Kamar::with('penghuni:id,nama_lengkap,kamar_id')
+            ->orderBy('nama_kamar', 'asc')
+            ->get();
 
-        \Log::info('Kamars fetched:', [
-            'count' => $kamars->count(),
-            'sample' => $kamars->first() ? [
-                'id' => $kamars->first()->id,
-                'nama' => $kamars->first()->nama_kamar,
-                'fasilitas_raw' => $kamars->first()->getAttributes()['deskripsi_fasilitas'],
-                'fasilitas_cast' => $kamars->first()->deskripsi_fasilitas,
-                'fasilitas_type' => gettype($kamars->first()->deskripsi_fasilitas)
-            ] : null
-        ]);
+        Log::info('Kamar list fetched', ['count' => $kamars->count()]);
 
         return response()->json([
             'message' => 'Daftar kamar berhasil diambil.',
@@ -30,9 +27,13 @@ class KamarController extends Controller
         ], 200);
     }
 
-    // CREATE: Menyimpan data kamar baru
+    /**
+     * POST /api/kamars
+     * Membuat kamar baru
+     */
     public function store(Request $request)
     {
+        // Validasi input
         $validator = Validator::make($request->all(), [
             'nama_kamar' => 'required|string|max:100|unique:kamars,nama_kamar',
             'harga_bulanan' => 'required|numeric|min:0',
@@ -40,64 +41,51 @@ class KamarController extends Controller
             'blok' => 'required|string|max:10',
             'lantai' => 'required|integer|min:1',
             'type' => 'required|integer|min:1',
-            'deskripsi_fasilitas' => 'nullable|string',
+            'deskripsi_fasilitas' => 'nullable|string', // Harus string JSON
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validasi gagal - Kamar:', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // 🔧 PERBAIKAN: Log input yang diterima
-        \Log::info('Creating kamar with input:', [
-            'all_input' => $request->all(),
-            'deskripsi_fasilitas_raw' => $request->input('deskripsi_fasilitas'),
-            'deskripsi_fasilitas_type' => gettype($request->input('deskripsi_fasilitas'))
-        ]);
-
-        // 🔧 PERBAIKAN: Validasi JSON string
-        $fasilitasString = $request->input('deskripsi_fasilitas');
-
-        // Cek apakah JSON valid
-        if ($fasilitasString) {
+        // Validasi format JSON untuk deskripsi_fasilitas
+        if ($request->filled('deskripsi_fasilitas')) {
+            $fasilitasString = $request->input('deskripsi_fasilitas');
             $decoded = json_decode($fasilitasString, true);
+
             if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('JSON fasilitas tidak valid:', ['error' => json_last_error_msg()]);
                 return response()->json([
                     'message' => 'Format deskripsi_fasilitas tidak valid',
                     'error' => json_last_error_msg()
                 ], 422);
             }
-            \Log::info('Decoded facilities:', ['decoded' => $decoded]);
         }
 
-        // Mass Assignment
+        // Simpan kamar
         $kamar = Kamar::create($request->all());
 
-        // 🔧 Log hasil setelah create
-        \Log::info('Kamar created:', [
+        Log::info('Kamar created:', [
             'id' => $kamar->id,
-            'fasilitas_saved_raw' => $kamar->getAttributes()['deskripsi_fasilitas'],
-            'fasilitas_saved_cast' => $kamar->deskripsi_fasilitas,
-            'type' => gettype($kamar->deskripsi_fasilitas)
+            'nama' => $kamar->nama_kamar,
+            'has_fasilitas' => !empty($kamar->deskripsi_fasilitas)
         ]);
-
-        // Refresh untuk memastikan cast bekerja
-        $kamar = $kamar->fresh();
 
         return response()->json([
             'message' => 'Kamar baru berhasil ditambahkan.',
-            'data' => $kamar
+            'data' => $kamar->fresh()
         ], 201);
     }
 
-    // READ ONE: Menampilkan satu kamar berdasarkan ID
+    /**
+     * GET /api/kamars/{id}
+     * Menampilkan detail satu kamar
+     */
     public function show(Kamar $kamar)
     {
-        \Log::info('Showing kamar:', [
-            'id' => $kamar->id,
-            'fasilitas_raw' => $kamar->getAttributes()['deskripsi_fasilitas'],
-            'fasilitas_cast' => $kamar->deskripsi_fasilitas,
-            'type' => gettype($kamar->deskripsi_fasilitas)
-        ]);
+        // Load relasi penghuni jika ada
+        $kamar->load('penghuni:id,nama_lengkap,kamar_id,status_sewa');
 
         return response()->json([
             'message' => 'Detail kamar berhasil diambil.',
@@ -105,9 +93,13 @@ class KamarController extends Controller
         ], 200);
     }
 
-    // UPDATE: Memperbarui data kamar
+    /**
+     * PUT/PATCH /api/kamars/{id}
+     * Update data kamar
+     */
     public function update(Request $request, Kamar $kamar)
     {
+        // Validasi input (unique exception untuk kamar saat ini)
         $validator = Validator::make($request->all(), [
             'nama_kamar' => 'required|string|max:100|unique:kamars,nama_kamar,' . $kamar->id,
             'harga_bulanan' => 'required|numeric|min:0',
@@ -119,39 +111,28 @@ class KamarController extends Controller
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validasi gagal - Update Kamar:', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // 🔧 PERBAIKAN: Log input yang diterima
-        \Log::info('Updating kamar:', [
-            'kamar_id' => $kamar->id,
-            'all_input' => $request->all(),
-            'deskripsi_fasilitas_input' => $request->input('deskripsi_fasilitas'),
-            'current_fasilitas' => $kamar->deskripsi_fasilitas
-        ]);
-
-        // 🔧 PERBAIKAN: Validasi JSON string
-        $fasilitasString = $request->input('deskripsi_fasilitas');
-
-        if ($fasilitasString) {
+        // Validasi format JSON untuk deskripsi_fasilitas
+        if ($request->filled('deskripsi_fasilitas')) {
+            $fasilitasString = $request->input('deskripsi_fasilitas');
             $decoded = json_decode($fasilitasString, true);
+
             if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('JSON fasilitas tidak valid:', ['error' => json_last_error_msg()]);
                 return response()->json([
                     'message' => 'Format deskripsi_fasilitas tidak valid',
                     'error' => json_last_error_msg()
                 ], 422);
             }
-            \Log::info('Decoded facilities for update:', ['decoded' => $decoded]);
         }
 
+        // Update kamar
         $kamar->update($request->all());
 
-        // 🔧 Log hasil setelah update
-        \Log::info('Kamar updated:', [
-            'id' => $kamar->id,
-            'fasilitas_after_raw' => $kamar->getAttributes()['deskripsi_fasilitas'],
-            'fasilitas_after_cast' => $kamar->fresh()->deskripsi_fasilitas
-        ]);
+        Log::info('Kamar updated:', ['id' => $kamar->id, 'nama' => $kamar->nama_kamar]);
 
         return response()->json([
             'message' => 'Data kamar berhasil diperbarui.',
@@ -159,17 +140,25 @@ class KamarController extends Controller
         ], 200);
     }
 
-    // DELETE: Menghapus data kamar
+    /**
+     * DELETE /api/kamars/{id}
+     * Hapus kamar (hanya jika tidak ditempati)
+     */
     public function destroy(Kamar $kamar)
     {
-        // Cek apakah kamar ini memiliki penghuni aktif
-        if ($kamar->penghuni) {
+        // Cek apakah kamar memiliki penghuni aktif
+        if ($kamar->penghuni()->where('status_sewa', 'Aktif')->exists()) {
+            Log::warning('Gagal hapus kamar - masih ditempati:', ['kamar_id' => $kamar->id]);
             return response()->json([
-                'message' => 'Kamar tidak dapat dihapus karena masih ditempati penghuni.'
+                'message' => 'Kamar tidak dapat dihapus karena masih ditempati penghuni aktif.'
             ], 409);
         }
 
+        $kamarId = $kamar->id;
+        $kamarNama = $kamar->nama_kamar;
         $kamar->delete();
+
+        Log::info('Kamar deleted:', ['id' => $kamarId, 'nama' => $kamarNama]);
 
         return response()->json(['message' => 'Kamar berhasil dihapus.'], 200);
     }

@@ -35,12 +35,6 @@ class AuthController extends Controller
             ], 401); // 401 Unauthorized
         }
 
-        // 3. Menghapus token lama (opsional, untuk keamanan)
-        // $user->tokens()->delete();
-
-        // 4. Membuat Token Sanctum
-        // 'admin-token' adalah nama kemampuan (ability) token
-        // $token = $user->createToken('admin-token')->plainTextToken;
         $token = $user->createToken('admin-token', ['*'], now()->addMinutes(config('sanctum.expiration')))->plainTextToken;
 
         return response()->json([

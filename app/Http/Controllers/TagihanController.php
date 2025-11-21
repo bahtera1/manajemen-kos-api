@@ -136,29 +136,34 @@ class TagihanController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, Tagihan $tagihan)
+    public function getOrCreateDraft($penghuniId)
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:Lunas,Belum Lunas',
-        ]);
+        // 1. Cek apakah sudah ada Tagihan yang Belum Lunas (Draft)
+        $tagihan = Tagihan::where('penghuni_id', $penghuniId)
+            ->where('status', '!=', 'Lunas') // Status yang dianggap Draft/Belum Selesai
+            ->orderBy('id', 'desc')
+            ->first();
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        // 2. Jika tidak ada draft, buat Tagihan baru (Draft)
+        if (!$tagihan) {
+            $penghuni = Penghuni::with('kamar')->findOrFail($penghuniId);
+
+            // Buat Tagihan baru (Draft)
+            $tagihan = Tagihan::create([
+                'penghuni_id' => $penghuniId,
+                'kamar_id' => $penghuni->kamar_id,
+                'nomor_tagihan' => 'DRAFT-' . time(),
+                'deskripsi' => "Draft Invoice Sewa Kamar {$penghuni->kamar->nama_kamar}",
+                'jumlah' => $penghuni->kamar->harga_bulanan ?? 0,
+                'jatuh_tempo' => Carbon::today()->addDays(7)->toDateString(),
+                'status' => 'Belum Lunas',
+            ]);
         }
 
-        $newStatus = $request->status;
-
-        // Aksi ini tidak boleh mengubah Transaksi yang sudah ada di sistem,
-        // melainkan hanya status Tagihan itu sendiri.
-
-        // CATATAN: Dalam implementasi final, jika status diubah menjadi 'Belum Lunas',
-        // Anda harus menghapus Transaksi terkait yang pernah dibuat.
-
-        $tagihan->update(['status' => $newStatus]);
-
+        // 3. Kembalikan ID Tagihan Draft
         return response()->json([
-            'message' => "Status tagihan ID {$tagihan->id} berhasil diubah menjadi {$newStatus}.",
-            'data' => $tagihan
+            'message' => 'ID Draft Invoice berhasil diambil/dibuat.',
+            'tagihan_id' => $tagihan->id
         ], 200);
     }
 }

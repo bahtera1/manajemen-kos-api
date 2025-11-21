@@ -30,7 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('penghunis/{penghuni}/reassign', [PenghuniController::class, 'reassign']);
     Route::get('penghunis/{id}/tagihans', [PenghuniController::class, 'getDetailAndTagihans']);
     Route::get('tagihans/{id}/kuitansi-data', [TagihanController::class, 'getKuitansiData']);
-    Route::post('tagihans/{tagihan}/update-status', [TagihanController::class, 'updateStatus']);
+    Route::get('/tagihans/draft/{penghuniId}', [TagihanController::class, 'getOrCreateDraft']);
 
     // 3. TRANSAKSI (CRUD & Pelaporan)
     Route::apiResource('transaksis', TransaksiController::class);

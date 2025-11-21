@@ -19,23 +19,33 @@ class TransaksiController extends Controller
      */
     public function index(Request $request)
     {
+        // Tentukan jumlah item per halaman, default 10
+        $perPage = $request->get('per_page', 10);
+
         $query = Transaksi::query();
 
         // Filter berdasarkan range tanggal
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('tanggal_transaksi', [$request->start_date, $request->end_date]);
-            Log::info('Filter transaksi:', ['start' => $request->start_date, 'end' => $request->end_date]);
+        }
+
+        // Filter berdasarkan tipe_transaksi
+        if ($request->filled('tipe_transaksi') && in_array($request->tipe_transaksi, ['Pemasukan', 'Pengeluaran'])) {
+            $query->where('tipe_transaksi', $request->tipe_transaksi);
         }
 
         // Load relasi penghuni dan kamar
+        // 💡 PERUBAHAN UTAMA: Ganti ->get() dengan ->paginate()
         $transaksis = $query->with([
             'penghuni:id,nama_lengkap',
             'kamar:id,nama_kamar'
         ])
             ->orderBy('tanggal_transaksi', 'desc')
-            ->get();
+            ->paginate($perPage); // Menggunakan paginate
 
-        return response()->json(['data' => $transaksis], 200);
+        // Laravel Paginator secara otomatis mengembalikan JSON dengan metadata (current_page, last_page, total, data)
+        return response()->json($transaksis, 200);
+        // Data yang dikembalikan sekarang berbentuk: { data: [...], current_page: 1, last_page: 5, total: 50, ... }
     }
 
     /**

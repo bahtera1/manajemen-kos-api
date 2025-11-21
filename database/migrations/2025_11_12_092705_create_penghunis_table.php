@@ -16,12 +16,12 @@ return new class extends Migration {
             // Foreign Key
             $table->foreignId('kamar_id')->constrained('kamars')->onDelete('restrict');
 
-            $table->string('nama_lengkap', 255);
-            $table->string('no_ktp', 50);
-            $table->string('no_hp', 50);
-            $table->string('email', 255)->nullable();
+            $table->string('nama_lengkap', 150);
+            $table->string('no_ktp', 17);
+            $table->string('no_hp', 16);
+            $table->string('email', 150)->nullable();
             $table->string('pekerjaan', 100)->nullable();
-            $table->string('pic_emergency', 255);
+            $table->string('pic_emergency', 150);
             $table->date('tanggal_masuk')->nullable();
             $table->date('tanggal_keluar')->nullable();
             $table->enum('status_sewa', ['Aktif', 'Nonaktif'])->default('Aktif');

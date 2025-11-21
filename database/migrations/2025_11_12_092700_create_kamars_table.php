@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('kamars', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_kamar', 100)->unique();
+            $table->string('nama_kamar', 50);
             $table->decimal('harga_bulanan', 10, 2);
             $table->string('luas_kamar', 50);
             $table->boolean('is_available')->default(true);

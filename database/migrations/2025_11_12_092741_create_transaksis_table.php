@@ -20,7 +20,6 @@ return new class extends Migration {
             $table->text('deskripsi');
             $table->decimal('jumlah', 10, 2);
             $table->date('tanggal_transaksi');
-            $table->string('url_kuitansi', 500)->nullable();
             $table->timestamps();
             $table->foreignId('kamar_id')->nullable()->constrained('kamars')->onDelete('set null');
             $table->string('metode_pembayaran', 50)->nullable();

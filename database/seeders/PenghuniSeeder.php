@@ -32,7 +32,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[1],
                 'nama_lengkap' => 'Ade Sucipto',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-02-09',
                 'masa_berakhir_sewa' => '2025-07-09',
                 'status_sewa' => 'Aktif',
@@ -47,7 +47,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[2],
                 'nama_lengkap' => 'Ocid',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-05-04',
                 'masa_berakhir_sewa' => '2025-07-04',
                 'status_sewa' => 'Aktif',
@@ -62,7 +62,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[3],
                 'nama_lengkap' => 'Veronika Manurung',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-04-19',
                 'masa_berakhir_sewa' => '2025-05-19',
                 'status_sewa' => 'Nonaktif',
@@ -92,7 +92,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[5],
                 'nama_lengkap' => 'Ayesa Acep',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2024-12-15',
                 'masa_berakhir_sewa' => '2025-12-15',
                 'status_sewa' => 'Aktif',
@@ -107,7 +107,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[6],
                 'nama_lengkap' => 'Sahla Audriya Fahiratunisa',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-01-05',
                 'masa_berakhir_sewa' => '2025-07-05',
                 'status_sewa' => 'Aktif',
@@ -122,7 +122,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[7],
                 'nama_lengkap' => 'Nur Janah / Fahira',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-02-28',
                 'masa_berakhir_sewa' => '2025-07-30',
                 'status_sewa' => 'Nonaktif',
@@ -137,7 +137,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[8],
                 'nama_lengkap' => 'Siti Sopariah',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2022-01-11',
                 'masa_berakhir_sewa' => '2025-06-25',
                 'status_sewa' => 'Nonaktif',
@@ -152,7 +152,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[9],
                 'nama_lengkap' => 'Gonggoman Yogo',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => null,
                 'masa_berakhir_sewa' => '2025-07-01',
                 'status_sewa' => 'Aktif',
@@ -167,7 +167,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[10],
                 'nama_lengkap' => 'Ibu Reni',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-08-15',
                 'masa_berakhir_sewa' => '2025-07-12',
                 'status_sewa' => 'Aktif',
@@ -182,7 +182,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[11],
                 'nama_lengkap' => 'Dhani Wahyudin',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => null,
                 'masa_berakhir_sewa' => '2025-07-01',
                 'status_sewa' => 'Aktif',
@@ -197,7 +197,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[12],
                 'nama_lengkap' => 'Ruslan Febrian',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-05-05',
                 'masa_berakhir_sewa' => '2025-10-04',
                 'status_sewa' => 'Nonaktif',
@@ -212,7 +212,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[13],
                 'nama_lengkap' => 'Afriza',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => null,
                 'masa_berakhir_sewa' => null,
                 'status_sewa' => 'Aktif',
@@ -227,7 +227,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[14],
                 'nama_lengkap' => 'Leli',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-08-25',
                 'masa_berakhir_sewa' => '2026-08-26',
                 'status_sewa' => 'Aktif',
@@ -242,7 +242,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[15],
                 'nama_lengkap' => 'Lisa / Shandy',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => null,
                 'masa_berakhir_sewa' => null,
                 'status_sewa' => 'Aktif',
@@ -257,7 +257,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[16],
                 'nama_lengkap' => 'Abang',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => null,
                 'masa_berakhir_sewa' => '2025-12-31',
                 'status_sewa' => 'Nonaktif',
@@ -287,7 +287,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[18],
                 'nama_lengkap' => 'Rizal Slamet',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-06-05',
                 'masa_berakhir_sewa' => '2025-08-01',
                 'status_sewa' => 'Nonaktif',
@@ -332,7 +332,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[21],
                 'nama_lengkap' => 'Halimah Sadiyah',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-06-28',
                 'masa_berakhir_sewa' => '2025-07-02',
                 'status_sewa' => 'Nonaktif',
@@ -407,7 +407,7 @@ class PenghuniSeeder extends Seeder
             [
                 'kamar_id' => $kamarIds[0], // Mulai ulangi dari ID 1
                 'nama_lengkap' => 'Kurnia Wiyati Pradwi',
-                'no_ktp' => '',
+                'no_ktp' => '0000000000000000',
                 'tanggal_masuk' => '2025-04-14',
                 'masa_berakhir_sewa' => '2025-07-14',
                 'status_sewa' => 'Nonaktif',

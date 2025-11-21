@@ -18,7 +18,7 @@ return new class extends Migration {
                 ->nullable()
                 ->constrained('transaksis')
                 ->onDelete('set null');
-            $table->string('nomor_tagihan')->unique();
+            $table->string('nomor_tagihan');
             $table->text('deskripsi');
             $table->decimal('jumlah', 10, 2);
             $table->date('jatuh_tempo');

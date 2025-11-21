@@ -17,7 +17,7 @@ class PenghuniController extends Controller
      */
     public function index()
     {
-        $penghunis = Penghuni::with('kamar:id,nama_kamar,is_available')
+        $penghunis = Penghuni::with('kamar:id,nama_kamar,blok,lantai,is_available')
             ->orderBy('status_sewa', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();

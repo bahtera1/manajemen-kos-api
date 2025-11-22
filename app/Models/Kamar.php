@@ -15,7 +15,6 @@ class Kamar extends Model
         'nama_kamar',
         'harga_bulanan',
         'luas_kamar',
-        'url_foto',
         'is_available',
         'deskripsi_fasilitas',
         'blok',

@@ -50,7 +50,7 @@ class KamarController extends Controller
             $query->where('type', $request->type);
         }
 
-        $kamars = $query->with('penghuni:id,nama_lengkap,kamar_id')
+        $kamars = $query->with('penghuni:id,nama_lengkap,kamar_id,status_sewa')
             ->orderBy('nama_kamar', 'asc')
             ->get();
 

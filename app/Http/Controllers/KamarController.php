@@ -13,13 +13,56 @@ class KamarController extends Controller
      * GET /api/kamars
      * Mengambil semua data kamar dengan relasi penghuni
      */
-    public function index()
+    public function index(Request $request)
     {
-        $kamars = Kamar::with('penghuni:id,nama_lengkap,kamar_id')
+        $query = Kamar::query();
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_kamar', 'like', "%{$search}%")
+                    ->orWhere('blok', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by availability
+        if ($request->filled('is_available')) {
+            $available = $request->is_available === 'true' || $request->is_available === '1';
+            if ($available) {
+                $query->whereDoesntHave('penghuni', function ($q) {
+                    $q->where('status_sewa', 'Aktif');
+                });
+            } else {
+                $query->whereHas('penghuni', function ($q) {
+                    $q->where('status_sewa', 'Aktif');
+                });
+            }
+        }
+
+        // Filter by lantai
+        if ($request->filled('lantai')) {
+            $query->where('lantai', $request->lantai);
+        }
+
+        // Filter by type
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $kamars = $query->with('penghuni:id,nama_lengkap,kamar_id')
             ->orderBy('nama_kamar', 'asc')
             ->get();
 
-        Log::info('Kamar list fetched', ['count' => $kamars->count()]);
+        Log::info('Kamar list fetched', [
+            'count' => $kamars->count(),
+            'search' => $request->search ?? null,
+            'filters' => [
+                'is_available' => $request->is_available ?? null,
+                'lantai' => $request->lantai ?? null,
+                'type' => $request->type ?? null
+            ]
+        ]);
 
         return response()->json([
             'message' => 'Daftar kamar berhasil diambil.',

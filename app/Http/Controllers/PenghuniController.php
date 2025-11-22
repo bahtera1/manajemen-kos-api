@@ -20,21 +20,37 @@ class PenghuniController extends Controller
         // 1. Inisialisasi query
         $query = Penghuni::query();
 
-        // 2. Terapkan Filter (sekarang filter ini bekerja pada objek $query)
+        // 2. Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                    ->orWhere('no_ktp', 'like', "%{$search}%")
+                    ->orWhere('no_hp', 'like', "%{$search}%");
+            });
+        }
+
+        // 3. Filter by status
         if ($request->filled('status_sewa')) {
             $query->where('status_sewa', $request->status_sewa);
         }
 
-        // 3. Tambahkan relasi dan urutan
+        // 4. Filter by kamar
+        if ($request->filled('kamar_id')) {
+            $query->where('kamar_id', $request->kamar_id);
+        }
+
+        // 5. Tambahkan relasi dan urutan
         $query->with('kamar:id,nama_kamar,blok,lantai,is_available')
             ->orderBy('status_sewa', 'desc')
             ->orderBy('created_at', 'desc');
 
-        // 4. Eksekusi query HANYA SEKALI
+        // 6. Eksekusi query
         $penghunis = $query->get();
 
         Log::info('Penghuni list fetched', [
             'count' => $penghunis->count(),
+            'search' => $request->search ?? null,
             'filtered_by' => $request->status_sewa ?? 'all'
         ]);
 

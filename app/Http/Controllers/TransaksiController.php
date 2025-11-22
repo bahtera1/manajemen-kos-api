@@ -24,6 +24,15 @@ class TransaksiController extends Controller
 
         $query = Transaksi::query();
 
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('deskripsi', 'like', "%{$search}%")
+                    ->orWhere('kategori', 'like', "%{$search}%");
+            });
+        }
+
         // Filter berdasarkan range tanggal
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('tanggal_transaksi', [$request->start_date, $request->end_date]);
@@ -34,18 +43,20 @@ class TransaksiController extends Controller
             $query->where('tipe_transaksi', $request->tipe_transaksi);
         }
 
+        // Filter by penghuni
+        if ($request->filled('penghuni_id')) {
+            $query->where('penghuni_id', $request->penghuni_id);
+        }
+
         // Load relasi penghuni dan kamar
-        // 💡 PERUBAHAN UTAMA: Ganti ->get() dengan ->paginate()
         $transaksis = $query->with([
             'penghuni:id,nama_lengkap',
             'kamar:id,nama_kamar'
         ])
             ->orderBy('tanggal_transaksi', 'desc')
-            ->paginate($perPage); // Menggunakan paginate
+            ->paginate($perPage);
 
-        // Laravel Paginator secara otomatis mengembalikan JSON dengan metadata (current_page, last_page, total, data)
         return response()->json($transaksis, 200);
-        // Data yang dikembalikan sekarang berbentuk: { data: [...], current_page: 1, last_page: 5, total: 50, ... }
     }
 
     /**

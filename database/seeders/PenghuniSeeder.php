@@ -420,6 +420,14 @@ class PenghuniSeeder extends Seeder
                 'updated_at' => now()
             ],
         ];
+        // Pastikan penghuni Nonaktif memiliki kamar_id null
+        foreach ($penghuni as &$p) {
+            if ($p['status_sewa'] === 'Nonaktif') {
+                $p['kamar_id'] = null;
+            }
+        }
+        unset($p);
+
         DB::table('penghunis')->insert($penghuni);
     }
 }

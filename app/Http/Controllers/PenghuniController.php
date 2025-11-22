@@ -6,6 +6,8 @@ use App\Models\Penghuni;
 use App\Models\Kamar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\StorePenghuniRequest;
+use App\Http\Requests\UpdatePenghuniRequest;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
@@ -61,26 +63,10 @@ class PenghuniController extends Controller
      * POST /api/penghunis
      * Membuat penghuni baru dan assign ke kamar
      */
-    public function store(Request $request)
+    public function store(StorePenghuniRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'kamar_id' => 'required|exists:kamars,id',
-            'nama_lengkap' => 'required|string|max:255',
-            'no_ktp' => 'required|string|max:50|unique:penghunis,no_ktp',
-            'tanggal_masuk' => 'required|date',
-            'pic_emergency' => 'required|string|max:255',
-            'no_hp' => 'required|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'pekerjaan' => 'nullable|string|max:100',
-            'catatan' => 'nullable|string',
-            'initial_duration' => 'nullable|integer|min:1',
-            'duration_unit' => 'required|in:day,week,month,year',
-        ]);
-
-        if ($validator->fails()) {
-            Log::error('Validasi gagal - Penghuni:', $validator->errors()->toArray());
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Validasi sudah ditangani oleh StorePenghuniRequest
+        // Jika gagal, otomatis return 422 JSON response
 
         // Cek ketersediaan kamar
         $kamar = Kamar::findOrFail($request->kamar_id);
@@ -134,24 +120,9 @@ class PenghuniController extends Controller
      * PUT/PATCH /api/penghunis/{id}
      * Update data penghuni (dengan logic pindah kamar & recalculate)
      */
-    public function update(Request $request, Penghuni $penghuni)
+    public function update(UpdatePenghuniRequest $request, Penghuni $penghuni)
     {
-        $validator = Validator::make($request->all(), [
-            'no_ktp' => 'required|string|max:17',
-            'nama_lengkap' => 'required|string|max:150',
-            'no_hp' => 'required|string|max:16',
-            'pic_emergency' => 'required|string|max:150',
-            'tanggal_masuk' => 'required|date',
-            'email' => 'nullable|email|max:150',
-            'kamar_id' => 'required|exists:kamars,id',
-            'pekerjaan' => 'nullable|string|max:100',
-            'catatan' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            Log::error('Validasi gagal - Update Penghuni:', $validator->errors()->toArray());
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Validasi otomatis oleh UpdatePenghuniRequest
 
         $oldKamarId = $penghuni->kamar_id;
         $newKamarId = $request->kamar_id;

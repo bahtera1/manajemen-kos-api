@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Kamar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\StoreKamarRequest;
+use App\Http\Requests\UpdateKamarRequest;
 use Illuminate\Support\Facades\Log;
 
 class KamarController extends Controller
@@ -74,23 +76,9 @@ class KamarController extends Controller
      * POST /api/kamars
      * Membuat kamar baru
      */
-    public function store(Request $request)
+    public function store(StoreKamarRequest $request)
     {
-        // Validasi input
-        $validator = Validator::make($request->all(), [
-            'nama_kamar' => 'required|string|max:100|unique:kamars,nama_kamar',
-            'harga_bulanan' => 'required|numeric|min:0',
-            'luas_kamar' => 'required|string|max:50',
-            'blok' => 'required|string|max:10',
-            'lantai' => 'required|integer|min:1',
-            'type' => 'required|integer|min:1',
-            'deskripsi_fasilitas' => 'nullable|string', // Harus string JSON
-        ]);
-
-        if ($validator->fails()) {
-            Log::error('Validasi gagal - Kamar:', $validator->errors()->toArray());
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Validasi otomatis oleh StoreKamarRequest
 
         // Validasi format JSON untuk deskripsi_fasilitas
         if ($request->filled('deskripsi_fasilitas')) {
@@ -140,23 +128,9 @@ class KamarController extends Controller
      * PUT/PATCH /api/kamars/{id}
      * Update data kamar
      */
-    public function update(Request $request, Kamar $kamar)
+    public function update(UpdateKamarRequest $request, Kamar $kamar)
     {
-        // Validasi input (unique exception untuk kamar saat ini)
-        $validator = Validator::make($request->all(), [
-            'nama_kamar' => 'required|string|max:100|unique:kamars,nama_kamar,' . $kamar->id,
-            'harga_bulanan' => 'required|numeric|min:0',
-            'luas_kamar' => 'required|string|max:50',
-            'blok' => 'required|string|max:10',
-            'lantai' => 'required|integer|min:1',
-            'type' => 'required|integer|min:1',
-            'deskripsi_fasilitas' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            Log::error('Validasi gagal - Update Kamar:', $validator->errors()->toArray());
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Validasi otomatis oleh UpdateKamarRequest
 
         // Validasi format JSON untuk deskripsi_fasilitas
         if ($request->filled('deskripsi_fasilitas')) {
@@ -197,12 +171,19 @@ class KamarController extends Controller
             ], 409);
         }
 
-        $kamarId = $kamar->id;
-        $kamarNama = $kamar->nama_kamar;
-        $kamar->delete();
+        try {
+            $kamarId = $kamar->id;
+            $kamarNama = $kamar->nama_kamar;
+            $kamar->delete();
 
-        Log::info('Kamar deleted:', ['id' => $kamarId, 'nama' => $kamarNama]);
+            Log::info('Kamar deleted (Soft Delete):', ['id' => $kamarId, 'nama' => $kamarNama]);
 
-        return response()->json(['message' => 'Kamar berhasil dihapus.'], 200);
+            return response()->json(['message' => 'Kamar berhasil dihapus.'], 200);
+        } catch (\Exception $e) {
+            Log::error('Gagal menghapus kamar:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat menghapus kamar: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\StoreTransaksiRequest;
+use App\Http\Requests\UpdateTransaksiRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\Penghuni;
 use App\Models\Kamar;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class TransaksiController extends Controller
 {
@@ -63,24 +66,9 @@ class TransaksiController extends Controller
      * POST /api/transaksis
      * Membuat transaksi baru (Pemasukan/Pengeluaran)
      */
-    public function store(Request $request)
+    public function store(StoreTransaksiRequest $request)
     {
-        // Validasi input
-        $validator = Validator::make($request->all(), [
-            'tipe_transaksi' => 'required|in:Pemasukan,Pengeluaran',
-            'kategori' => 'required|string|max:100',
-            'deskripsi' => 'required|string',
-            'jumlah' => 'required|numeric|min:1',
-            'tanggal_transaksi' => 'required|date',
-            'kamar_id' => 'nullable|exists:kamars,id',
-            'metode_pembayaran' => 'nullable|string',
-            'penghuni_id' => 'nullable|exists:penghunis,id', // Opsional untuk Pengeluaran
-        ]);
-
-        if ($validator->fails()) {
-            Log::error('Validasi gagal - Transaksi:', $validator->errors()->toArray());
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Validasi otomatis oleh StoreTransaksiRequest
 
         // Simpan transaksi
         $transaksi = Transaksi::create($request->all());
@@ -108,23 +96,9 @@ class TransaksiController extends Controller
      * PUT/PATCH /api/transaksis/{id}
      * Update transaksi
      */
-    public function update(Request $request, Transaksi $transaksi)
+    public function update(UpdateTransaksiRequest $request, Transaksi $transaksi)
     {
-        $validator = Validator::make($request->all(), [
-            'tipe_transaksi' => 'required|in:Pemasukan,Pengeluaran',
-            'kategori' => 'required|string|max:100',
-            'deskripsi' => 'required|string',
-            'jumlah' => 'required|numeric|min:1',
-            'tanggal_transaksi' => 'required|date',
-            'kamar_id' => 'nullable|exists:kamars,id',
-            'metode_pembayaran' => 'nullable|string',
-            'penghuni_id' => 'nullable|exists:penghunis,id',
-        ]);
-
-        if ($validator->fails()) {
-            Log::error('Validasi gagal - Update Transaksi:', $validator->errors()->toArray());
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Validasi otomatis oleh UpdateTransaksiRequest
 
         $transaksi->update($request->all());
 
@@ -270,14 +244,16 @@ class TransaksiController extends Controller
         $sevenDaysLater = $today->copy()->addDays(7);
         $thirtyDaysAgo = $today->copy()->subDays(30);
 
-        // Cari penghuni aktif dengan masa sewa berakhir dalam range
-        $penghunisJatuhTempo = Penghuni::with('kamar:id,nama_kamar')
-            ->where('status_sewa', 'Aktif')
-            ->whereBetween('masa_berakhir_sewa', [$thirtyDaysAgo, $sevenDaysLater])
-            ->orderBy('masa_berakhir_sewa', 'asc')
-            ->get();
+        // Cache hasil report selama 60 menit
+        $penghunisJatuhTempo = Cache::remember('report_due_soon', 60 * 60, function () use ($thirtyDaysAgo, $sevenDaysLater) {
+            return Penghuni::with('kamar:id,nama_kamar')
+                ->where('status_sewa', 'Aktif')
+                ->whereBetween('masa_berakhir_sewa', [$thirtyDaysAgo, $sevenDaysLater])
+                ->orderBy('masa_berakhir_sewa', 'asc')
+                ->get();
+        });
 
-        Log::info('Due Soon Report:', [
+        Log::info('Due Soon Report (Cached):', [
             'count' => $penghunisJatuhTempo->count(),
             'range' => "$thirtyDaysAgo s/d $sevenDaysLater"
         ]);

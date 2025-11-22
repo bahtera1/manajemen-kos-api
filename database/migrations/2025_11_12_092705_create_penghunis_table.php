@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
 
             // Foreign Key
-            $table->foreignId('kamar_id')->constrained('kamars')->onDelete('restrict');
+            $table->foreignId('kamar_id')->nullable()->constrained('kamars')->onDelete('restrict');
 
             $table->string('nama_lengkap', 150);
             $table->string('no_ktp', 17);

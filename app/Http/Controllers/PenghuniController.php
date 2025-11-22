@@ -15,14 +15,28 @@ class PenghuniController extends Controller
      * GET /api/penghunis
      * Mengambil semua penghuni dengan relasi kamar
      */
-    public function index()
+    public function index(Request $request)
     {
-        $penghunis = Penghuni::with('kamar:id,nama_kamar,blok,lantai,is_available')
-            ->orderBy('status_sewa', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // 1. Inisialisasi query
+        $query = Penghuni::query();
 
-        Log::info('Penghuni list fetched', ['count' => $penghunis->count()]);
+        // 2. Terapkan Filter (sekarang filter ini bekerja pada objek $query)
+        if ($request->filled('status_sewa')) {
+            $query->where('status_sewa', $request->status_sewa);
+        }
+
+        // 3. Tambahkan relasi dan urutan
+        $query->with('kamar:id,nama_kamar,blok,lantai,is_available')
+            ->orderBy('status_sewa', 'desc')
+            ->orderBy('created_at', 'desc');
+
+        // 4. Eksekusi query HANYA SEKALI
+        $penghunis = $query->get();
+
+        Log::info('Penghuni list fetched', [
+            'count' => $penghunis->count(),
+            'filtered_by' => $request->status_sewa ?? 'all'
+        ]);
 
         return response()->json(['data' => $penghunis], 200);
     }
@@ -167,19 +181,17 @@ class PenghuniController extends Controller
 
         // Recalculate masa berakhir jika tanggal masuk berubah dan status Aktif
         if ($tanggalMasukBerubah && $penghuni->status_sewa === 'Aktif') {
-            // Asumsi $this->calculateEndDate() ada
-            // ... (logika recalculate tetap sama)
-            // $duration = $penghuni->durasi_bayar_terakhir ?? 1;
-            // $unit = $penghuni->unit_bayar_terakhir ?? 'month';
-            // $newStartDate = Carbon::parse($request->tanggal_masuk);
-            // $newEndDate = $this->calculateEndDate($newStartDate, $duration, $unit);
+            $duration = $penghuni->durasi_bayar_terakhir ?? 1;
+            $unit = $penghuni->unit_bayar_terakhir ?? 'month';
+            $newStartDate = Carbon::parse($request->tanggal_masuk);
+            $newEndDate = $this->calculateEndDate($newStartDate, $duration, $unit);
 
-            // $penghuni->update(['masa_berakhir_sewa' => $newEndDate]);
+            $penghuni->update(['masa_berakhir_sewa' => $newEndDate]);
 
-            // Log::info('Recalculated masa berakhir:', [
-            //     'penghuni_id' => $penghuni->id,
-            //     'new_end_date' => $newEndDate
-            // ]);
+            Log::info('Recalculated masa berakhir:', [
+                'penghuni_id' => $penghuni->id,
+                'new_end_date' => $newEndDate
+            ]);
         }
 
         return response()->json([
@@ -254,6 +266,11 @@ class PenghuniController extends Controller
             return response()->json(['message' => 'Penghuni ini sudah nonaktif.'], 400);
         }
 
+        // Cek apakah penghuni saat ini benar-benar menempati kamar sebelum checkout
+        if (!$penghuni->kamar_id) {
+            return response()->json(['message' => 'Penghuni ini tidak terikat pada kamar manapun.'], 400);
+        }
+
         $validator = Validator::make($request->all(), [
             'tanggal_keluar' => 'required|date|after_or_equal:' . $penghuni->tanggal_masuk,
         ]);
@@ -263,18 +280,21 @@ class PenghuniController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Update status penghuni
+        $kamarIdToFree = $penghuni->kamar_id;
+
+        // 💡 PERBAIKAN: Update status penghuni DAN LEPAS IKATAN KAMAR (kamar_id = NULL)
         $penghuni->update([
             'status_sewa' => 'Nonaktif',
             'tanggal_keluar' => $request->tanggal_keluar ?? Carbon::today(),
+            'kamar_id' => null, // <--- KRITIS: Lepas ikatan kamar
         ]);
 
-        // Bebaskan kamar
-        Kamar::where('id', $penghuni->kamar_id)->update(['is_available' => true]);
+        // Bebaskan kamar di tabel kamars
+        Kamar::where('id', $kamarIdToFree)->update(['is_available' => true]);
 
         Log::info('Penghuni checkout:', [
             'penghuni_id' => $penghuni->id,
-            'kamar_id' => $penghuni->kamar_id,
+            'kamar_yang_dilepas' => $kamarIdToFree,
             'tanggal_keluar' => $penghuni->tanggal_keluar
         ]);
 
